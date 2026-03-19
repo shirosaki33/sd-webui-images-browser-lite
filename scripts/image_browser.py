@@ -66,6 +66,11 @@ try:
 except ImportError:
     forge = False
 
+try:
+    from modules.infotext_utils import register_paste_params_button, ParamBinding
+except ImportError:
+    pass
+
 # Force reload wib_db, as it doesn't get reloaded otherwise, if an extension update is started from webui
 importlib.reload(wib_db)
 
@@ -1380,6 +1385,13 @@ def img_file_info_do_format(img_file_info):
         img_file_info_formatted = key_value_pairs
     return img_file_info_formatted
 
+def forge_classic_bind_buttons(buttons, send_image, send_generate_info):
+    for tabname, button in buttons.items():
+        source_text_component = send_generate_info if isinstance(send_generate_info, gr.components.Component) else None
+        source_tabname = send_generate_info if isinstance(send_generate_info, str) else None
+
+        register_paste_params_button(ParamBinding(paste_button=button, tabname=tabname, source_text_component=source_text_component, source_image_component=send_image, source_tabname=source_tabname))
+
 def create_tab(tab: ImageBrowserTab, current_gr_tab: gr.Tab):
     global init, exif_cache, aes_cache, openoutpaint, controlnet, js_dummy_return, show_progress_setting
     dir_name = None
@@ -1863,7 +1875,10 @@ def create_tab(tab: ImageBrowserTab, current_gr_tab: gr.Tab):
     try:
         sendto.bind_buttons(send_to_buttons, hidden, img_file_info)
     except:
-        pass
+        try:
+            forge_classic_bind_buttons(send_to_buttons, hidden, img_file_info)
+        except:
+            pass
     
     if standard_ui:
         current_gr_tab.select(
